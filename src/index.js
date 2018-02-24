@@ -16,12 +16,12 @@ httpRouter.get('/', async ctx => {
 
 app.ws.use((ctx, next) => next(ctx))
 
-app.ws.use(route.all('/test/:id', function (ctx) {
-  console.log('websocket route called')
+app.ws.use(route.all('/test/:id', (ctx, id) => {
+  console.log(`User ${id} | /test | CONNECTED`)
   ctx.websocket.send('Hello World')
   ctx.websocket.on('message', message => {
-    // do something with the message from client
-    console.log(message)
+    console.log(`User ${id} | /test | SENT ${message}`)
+    ctx.websocket.send(`echo ${message}`)
   })
 }))
 
