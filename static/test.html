@@ -36,16 +36,26 @@
   }
 
   function onMessage (evt) {
-    writeToScreen('<span style="color: cyan;">RESPONSE: ' + evt.data + '</span>')
+    const { id, message } =  parseResponse(evt)
+    writeToScreen(`<span style="color: cyan;" id="${id}">RESPONSE: ${message}</span>`)
   }
 
   function onError (evt) {
-    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data)
+    const { id, message } =  parseResponse(evt)
+    writeToScreen(`<span style="color: red;" id="${id}">ERROR: ${message}</span>`)
   }
 
   function doSend (message) {
     writeToScreen('SENT: ' + message)
     websocket.send(message)
+  }
+
+  function parseResponse(evt) {
+    try {
+      return JSON.parse(evt.data)
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   function storeMessage(e) {

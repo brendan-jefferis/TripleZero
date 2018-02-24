@@ -18,10 +18,12 @@ app.ws.use((ctx, next) => next(ctx))
 
 app.ws.use(route.all('/test/:id', (ctx, id) => {
   console.log(`User ${id} | /test | CONNECTED`)
-  ctx.websocket.send('Hello World')
   ctx.websocket.on('message', message => {
     console.log(`User ${id} | /test | SENT ${message}`)
-    ctx.websocket.send(`echo ${message}`)
+    ctx.websocket.send(JSON.stringify({
+      id: `${id}:${Date.now()}`,
+      message: `echo ${message}`
+    }))
   })
 }))
 
