@@ -21,10 +21,17 @@ const readyStates = {
   CLOSED: 3
 }
 
-function addConnection(id, profile) {
-  connections[id] = profile
+function setConnection(id, data) {
+  connections[id] = data
   connectionEvents.emit('update')
   console.log(`Added connection for ${id}`)
+}
+
+function updateConnection(id, data) {
+  connections[id] = {...connections[id], ...data}
+  console.log('CONNECTION UPDATED')
+  connectionEvents.emit('update')
+  console.log(`Updated connection for ${id}`)
 }
 
 function removeConnection(id) {
@@ -38,7 +45,6 @@ httpRouter.get('/', async ctx => {
 })
 
 app.ws.use(route.all('/dashboard', ctx => {
-  console.log('dashbopard readt satata', ctx.websocket.readyState)
   if (ctx.websocket.readyState === readyStates.OPEN) ctx.websocket.send(JSON.stringify(connections))
   connectionEvents.on('update', () => {
     if (ctx.websocket.readyState === readyStates.OPEN) ctx.websocket.send(JSON.stringify(connections))
@@ -52,18 +58,22 @@ app.ws.use(route.all('/test/:id', (ctx, id) => {
   ctx.websocket.on('message', message => {
     const data = JSON.parse(message)
     if (data.profile) {
-      addConnection(id, data.profile)
+      setConnection(id, {profile: data.profile})
       ctx.websocket.send(JSON.stringify({
         id: `${id}:${Date.now()}`,
         message: `CONNECTED`
       }))
       return
     }
+
+    if (data.location) {
+      updateConnection(id, {location: data.location})
+      return
+    }
     ctx.websocket.send(JSON.stringify({
       id: `${id}:${Date.now()}`,
       message: `echo ${data.message}`
     }))
-    console.log(connections)
   })
 
   ctx.websocket.on('close', () => {
