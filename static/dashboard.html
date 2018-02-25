@@ -1,10 +1,44 @@
 <!DOCTYPE html>
 <meta charset="utf-8"/>
-<title>WebSocket Test</title>
+<title>TripleZero Dashboard</title>
 <style>
-    html { background: #f1f1f1; color: #333; font-family: sans-serif; }
-    .caller { padding: 10px; margin: 20px; background: #fff; border: 1px solid #ccc;}
+    html {
+        background: #f1f1f1;
+        color: #333;
+        font-family: sans-serif;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .caller {
+        padding: 10px;
+        margin: 20px;
+        background: #fff;
+        border: 1px solid #ccc;
+    }
+
+    .maps {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+    }
+
+    #map1, #map2 {
+        flex: 1;
+        height: 400px;
+    }
+
+    #map1 {
+        margin-right: 10px;
+    }
 </style>
+
+<h2>Dashboard</h2>
+<div id="output"></div>
+
 <script language="javascript" type="text/javascript">
 
   const wsUri = 'ws://localhost:3000/dashboard'
@@ -16,7 +50,7 @@
   }
 
   function testWebSocket () {
-    websocket = new WebSocket(wsUri)
+    const websocket = new WebSocket(wsUri)
     websocket.onopen = onOpen
     websocket.onclose = onClose
     websocket.onmessage = onMessage
@@ -37,23 +71,56 @@
     writeToScreen(parseResponse(evt))
   }
 
-  function parseResponse(evt) {
+  function parseResponse (evt) {
     try {
       const connections = JSON.parse(evt.data)
-      return Object.entries(connections).map(([id, userData]) => ({ id, ...userData}))
+      return Object.entries(connections).map(([id, userData]) => ({id, ...userData}))
     } catch (e) {
       console.log(e)
     }
   }
 
-  function renderLocation(location) {
-    return `
-        <div>
-            <hr>
-            <p>Latitude <strong>${location.coords.latitude}</strong></p>
-            <p>Longitude <strong>${location.coords.longitude}</strong></p>
-        </div>
-    `
+  function renderLocation (location) {
+    if (!location) return
+    const position = {lat: location.coords.latitude, lng: location.coords.longitude}
+    const map1 = new google.maps.Map(document.getElementById(`map1`), {
+      zoom: 12,
+      center: position,
+      styles: [
+        {
+          'featureType': 'poi',
+          'stylers': [
+            {
+              'visibility': 'off'
+            }
+          ]
+        }
+      ]
+    })
+    const map2 = new google.maps.Map(document.getElementById(`map2`), {
+      zoom: 17,
+      center: position,
+      styles: [
+        {
+          'featureType': 'poi',
+          'stylers': [
+            {
+              'visibility': 'off'
+            }
+          ]
+        }
+      ]
+    })
+    new google.maps.Marker({
+      position: position,
+      map: map1,
+      icon: 'http://localhost:3000/marker.svg'
+    })
+    new google.maps.Marker({
+      position: position,
+      map: map2,
+      icon: 'http://localhost:3000/marker.svg'
+    })
   }
 
   function writeToScreen (connections) {
@@ -67,20 +134,22 @@
             <p>Bloodtype <strong>${profile.bloodType}</strong></p>
             <p>Allergies <strong>${profile.allergies}</strong></p>
             <p>Medical conditions <strong>${profile.medicalConditions}</strong></p>
-            <hr>
+            <div class="maps">
+                <div id="map1"></div>
+                <div id="map2"></div>
+            </div>
             <h6>Next of kin</h6>
             <h4>${profile.nextOfKin.name}</h4>
             <p>Relationship <strong>${profile.nextOfKin.relationship}</strong></p>
             <p>Phone <strong>${profile.nextOfKin.contactNumber}</strong></p>
-            ${ location ? renderLocation(location) : ''}
         </div>
         `)
+      renderLocation(location)
     })
   }
 
   window.addEventListener('load', init, false)
 
 </script>
-
-<h2>Dashboard</h2>
-<div id="output"></div>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9o-bLWo9iSd5iWKVA4aLP3htBCOEghI8&callback=renderLocation"></script>
